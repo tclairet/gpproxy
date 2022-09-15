@@ -15,14 +15,27 @@ import (
 	"testing"
 )
 
-func TestHttpAPI(t *testing.T) {
-	url, ok := os.LookupEnv("NODE_URL")
-	if !ok {
+var nodeHTTP, nodeWS string
+
+func TestMain(m *testing.M) {
+	nodeHTTP, _ = os.LookupEnv("NODE_URL")
+	nodeWS = nodeHTTP
+	if nodeHTTP == "" {
 		fakeNode := NewFakeEthNode()
 		defer fakeNode.Close()
-		url = fakeNode.server.URL
+		nodeHTTP = fakeNode.server.URL
+		nodeWS = fakeNode.server.URL + "/ws"
 	}
-	node, err := NewNodeService(url, "")
+	nodeWS = strings.Replace(nodeWS, "http", "ws", 1)
+	if strings.Contains(nodeWS, "infura.io/v3") {
+		nodeWS = strings.Replace(nodeWS, "infura.io/v3", "infura.io/ws/v3", 1)
+	}
+
+	m.Run()
+}
+
+func TestHttpAPI(t *testing.T) {
+	node, err := NewNodeService(nodeHTTP, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -78,13 +91,7 @@ func TestHttpAPI(t *testing.T) {
 }
 
 func TestWSAPI(t *testing.T) {
-	url, ok := os.LookupEnv("NODE_URL")
-	if !ok {
-		fakeNode := NewFakeEthNode()
-		defer fakeNode.Close()
-		url = fakeNode.server.URL + "/ws"
-	}
-	node, err := NewNodeService("", strings.Replace(url, "http", "ws", 1))
+	node, err := NewNodeService("", nodeWS)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -113,7 +120,7 @@ func TestWSAPI(t *testing.T) {
 	}
 }
 
-func TestEndpoint(t *testing.T) {
+func TestEndpoints(t *testing.T) {
 	api := NewAPI(nil)
 	server := httptest.NewServer(api.Routes())
 	defer server.Close()

@@ -22,13 +22,13 @@ type nodeService struct {
 	wsProxy   *websocketproxy.WebsocketProxy
 }
 
-func NewNodeService(httpstr string, wsstr string) (*nodeService, error) {
-	httpURL, err := url.Parse(httpstr)
+func NewNodeService(httpStr string, wsStr string) (NodeService, error) {
+	httpURL, err := url.Parse(httpStr)
 	if err != nil {
 		return nil, fmt.Errorf("node: %w", err)
 	}
 
-	wsURL, err := url.Parse(wsstr)
+	wsURL, err := url.Parse(wsStr)
 	if err != nil {
 		return nil, fmt.Errorf("node: %w", err)
 	}
